@@ -1,0 +1,35 @@
+import streamlit as st
+import pandas as pd
+import requests
+
+# Set the API URL
+API_URL = "https://gisdata.pima.gov/arcgis1/rest/services/GISOpenData/Addresses/MapServer/3/query?where=1%3D1&outFields=*&outSR=4326&f=json"
+
+# Load data function
+@st.cache_data
+def load_data():
+    st.info("Fetching data from Pima County GIS...")
+    response = requests.get(API_URL)
+    features = response.json().get('features', [])
+    records = [f['attributes'] for f in features]
+    df = pd.DataFrame(records)
+
+    # Optional: Filter columns for your lead tracker
+    df = df.rename(columns={
+        'ADDRESS': 'Address',
+        'LAT': 'Latitude',
+        'LON': 'Longitude'
+    })
+
+    # Add placeholder columns for visit tracking
+    df['Visited'] = 'No'
+    df['Notes'] = ''
+
+    return df
+
+# Load data
+data = load_data()
+
+# Display
+st.title("🏠 Pima County Address Leads")
+st.dataframe(data.head(100))  # Limit display for speed
